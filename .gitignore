@@ -37,3 +37,8 @@ Thumbs.db
 # Large files
 *.pdf
 qh_full.md
+
+# Internal docs (not for repo)
+design-system/
+docs/
+sections/
