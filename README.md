@@ -21,57 +21,29 @@ Hệ thống quản lý toàn diện gồm LMS (học tập trực tuyến), AI 
 
 ---
 
-## 🗂️ Cấu trúc dự án
-
-```
-qh/
-├── frontend/          # Next.js 15 App (toàn bộ UI)
-├── docs/
-│   ├── wireframe/     # 21 file wireframe (WF-01 → WF-10)
-│   └── frontend_implement/   # Tài liệu implement theo phase
-├── design-system/     # Design tokens & guidelines
-└── sections/          # Tài liệu đặc tả chức năng
-```
-
----
-
 ## 🚀 Cách chạy
 
-### Yêu cầu
-- Node.js ≥ 18
-- npm / pnpm
-- Docker (tuỳ chọn)
+> Yêu cầu: **Docker**
 
-### Chạy với npm
+### Development (hot-reload)
 
 ```bash
 cd frontend
-npm install
-npm run dev
+./scripts/start_dev.sh   # Khởi động
+./scripts/stop_dev.sh    # Dừng
 ```
 
 Truy cập: http://localhost:3000
 
-### Chạy với Docker
-
-```bash
-# Dev (hot reload)
-docker run -d --name frontend-dev \
-  -p 3000:3000 \
-  -v $(pwd)/frontend:/app \
-  node:20-alpine sh -c "cd /app && npm install && npm run dev"
-
-# Hoặc nếu đã có container
-docker start frontend-dev
-```
-
-### Build production
+### Production
 
 ```bash
 cd frontend
-npm run build
-npm start
+./scripts/start.sh       # Khởi động
+./scripts/stop.sh        # Dừng
 ```
+
+Truy cập: http://localhost:5174
 
 ---
 
@@ -90,48 +62,38 @@ npm start
 
 ---
 
-## 📁 Frontend Structure
+## 📁 Cấu trúc thư mục
 
 ```
-frontend/src/
-├── app/
-│   ├── (auth)/          # Đăng nhập
-│   ├── (dashboard)/     # Toàn bộ màn hình dashboard
-│   │   ├── admin/       # Quản trị hệ thống
-│   │   ├── ai-attendance/   # AI Điểm danh
-│   │   ├── exam/        # Thi trực tuyến
-│   │   ├── gddt/        # Tích hợp GDĐT
-│   │   ├── library/     # Thư viện
-│   │   ├── lms/         # LMS Giảng viên
-│   │   └── my-classes/  # Học tập (Học sinh)
-│   └── library-portal/  # Portal thư viện (public)
-├── features/            # Business logic theo module
-├── components/          # UI components dùng chung
-│   ├── ui/              # Base components (button, input…)
-│   ├── base/            # App-level components
-│   ├── composite/       # PageHeader, SearchBar…
-│   └── patterns/        # DataTable, CrudPage…
-├── hooks/               # Custom hooks
-├── stores/              # Zustand stores
-└── types/               # TypeScript types
+frontend/
+├── src/
+│   ├── app/
+│   │   ├── (auth)/          # Đăng nhập
+│   │   ├── (dashboard)/     # Toàn bộ màn hình dashboard
+│   │   │   ├── admin/       # Quản trị hệ thống
+│   │   │   ├── ai-attendance/   # AI Điểm danh
+│   │   │   ├── exam/        # Thi trực tuyến
+│   │   │   ├── gddt/        # Tích hợp GDĐT
+│   │   │   ├── library/     # Thư viện
+│   │   │   ├── lms/         # LMS Giảng viên
+│   │   │   └── my-classes/  # Học tập (Học sinh)
+│   │   └── library-portal/  # Portal thư viện (public)
+│   ├── features/            # Business logic theo module
+│   ├── components/          # UI components dùng chung
+│   │   ├── ui/              # Base components (button, input…)
+│   │   ├── base/            # App-level components
+│   │   ├── composite/       # PageHeader, SearchBar…
+│   │   └── patterns/        # DataTable, CrudPage…
+│   ├── hooks/               # Custom hooks
+│   ├── stores/              # Zustand stores
+│   └── types/               # TypeScript types
+├── scripts/
+│   ├── start.sh             # Khởi động production
+│   ├── stop.sh              # Dừng production
+│   ├── start_dev.sh         # Khởi động development
+│   └── stop_dev.sh          # Dừng development
+├── Dockerfile
+├── Dockerfile.dev
+├── docker-compose.yml
+└── docker-compose.dev.yml
 ```
-
----
-
-## 📋 Scripts
-
-```bash
-npm run dev          # Chạy development server (port 3000)
-npm run build        # Build production
-npm run start        # Chạy production server
-npm run lint         # Kiểm tra ESLint
-npm run type-check   # Kiểm tra TypeScript
-```
-
----
-
-## 📖 Tài liệu
-
-- [`docs/wireframe/`](docs/wireframe/) — Wireframe chi tiết từng màn hình
-- [`docs/frontend_implement/`](docs/frontend_implement/) — Kế hoạch implement theo phase
-- [`docs/design_token/`](docs/design_token/) — Design system & tokens
