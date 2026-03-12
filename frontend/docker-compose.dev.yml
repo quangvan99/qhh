@@ -1,0 +1,21 @@
+services:
+  frontend-dev:
+    container_name: frontend-dev
+    image: frontend-dev:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - WATCHPACK_POLLING=true
+      - NODE_ENV=development
+      - NEXT_TELEMETRY_DISABLED=1
+    env_file:
+      - .env.local
+    stdin_open: true
+    tty: true
