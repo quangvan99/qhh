@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Trash2, GripVertical, Settings, Download, Save, Eye } from 'lucide-react'
 import { PageHeader } from '@/components/composite/page-header'
 import { FormField } from '@/components/composite/form-field'
@@ -9,29 +9,57 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
 import { AppBadge } from '@/components/base/app-badge'
 import { toast } from 'sonner'
+import { useGetExam, useGetExamCategories } from '../hooks'
 import { ExamSectionModal, type SectionFormData } from './ExamSectionModal'
 import { RandomStructureModal } from './RandomStructureModal'
 import { QuestionPickerModal } from './QuestionPickerModal'
 import { ExamExportModal } from './ExamExportModal'
 
-const mockSections: SectionFormData[] = [
-  { id: 's1', name: 'Phần I - Trắc nghiệm', type: 'random', questionCount: 30, pointPerQuestion: 0.25 },
-  { id: 's2', name: 'Phần II - Tự luận', type: 'specific', questionCount: 5, pointPerQuestion: 1.5 },
-]
-
 export function ExamBuilderPage({ examId }: { examId?: string }) {
   const isEdit = !!examId
 
+  const { data: examData, isLoading } = useGetExam(examId ?? '')
+  const { data: catData } = useGetExamCategories()
+
+  const exam = examData?.data
+  const categories = catData?.data ?? []
+
   // Exam info state
-  const [examName, setExamName] = useState(isEdit ? 'Đề kiểm tra cuối kỳ Toán 12' : '')
-  const [category, setCategory] = useState(isEdit ? 'math' : '')
-  const [duration, setDuration] = useState(isEdit ? '90' : '45')
+  const [examName, setExamName] = useState('')
+  const [category, setCategory] = useState('')
+  const [duration, setDuration] = useState('45')
   const [description, setDescription] = useState('')
 
-  // Sections state
-  const [sections, setSections] = useState<SectionFormData[]>(isEdit ? mockSections : [])
+  // Sections state — map từ ExamSection sang SectionFormData
+  const [sections, setSections] = useState<SectionFormData[]>([])
+
+  // Populate form khi có dữ liệu từ API/mock (edit mode)
+  useEffect(() => {
+    if (!exam) return
+    setExamName(exam.name ?? '')
+    setCategory(exam.categoryId ?? '')
+    setDuration(String(exam.duration ?? 45))
+    setDescription(exam.description ?? '')
+    if (exam.sections && exam.sections.length > 0) {
+      setSections(
+        exam.sections
+          .slice()
+          .sort((a, b) => a.order - b.order)
+          .map((s) => ({
+            id: s.id,
+            name: s.name,
+            type: s.selectionMode === 'random' ? 'random' : 'specific',
+            questionCount: s.selectionMode === 'random'
+              ? (s.randomConfig?.reduce((sum, r) => sum + r.count, 0) ?? 0)
+              : (s.questions?.length ?? 0),
+            pointPerQuestion: s.scorePerQuestion,
+          }))
+      )
+    }
+  }, [exam])
 
   // Modal states
   const [sectionModalOpen, setSectionModalOpen] = useState(false)
@@ -80,6 +108,21 @@ export function ExamBuilderPage({ examId }: { examId?: string }) {
     setSections(newSections)
   }
 
+  const handleSave = (draft: boolean) => {
+    if (!examName.trim()) { toast.error('Vui lòng nhập tên đề thi'); return }
+    toast.success(draft ? 'Đã lưu nháp' : 'Đã lưu đề thi thành công!')
+  }
+
+  if (isEdit && isLoading) {
+    return (
+      <div className="space-y-6 max-w-4xl">
+        <Skeleton className="h-10 w-72" />
+        <Skeleton className="h-52 w-full" />
+        <Skeleton className="h-48 w-full" />
+      </div>
+    )
+  }
+
   return (
     <div>
       <PageHeader
@@ -91,8 +134,8 @@ export function ExamBuilderPage({ examId }: { examId?: string }) {
         actions={[
           { label: 'Xuất đề', variant: 'outline', icon: <Download className="h-4 w-4" />, onClick: () => setExportModalOpen(true) },
           { label: 'Xem trước', variant: 'outline', icon: <Eye className="h-4 w-4" />, onClick: () => toast.info('Chức năng xem trước đang phát triển') },
-          { label: 'Lưu nháp', variant: 'outline', icon: <Save className="h-4 w-4" />, onClick: () => toast.success('Đã lưu nháp') },
-          { label: 'Lưu đề thi', onClick: () => toast.success('Đã lưu đề thi thành công!') },
+          { label: 'Lưu nháp', variant: 'outline', icon: <Save className="h-4 w-4" />, onClick: () => handleSave(true) },
+          { label: 'Lưu đề thi', onClick: () => handleSave(false) },
         ]}
       />
 
@@ -109,11 +152,9 @@ export function ExamBuilderPage({ examId }: { examId?: string }) {
                 <Select value={category} onValueChange={(v) => v && setCategory(v)}>
                   <SelectTrigger><SelectValue placeholder="Chọn danh mục" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="math">Toán học</SelectItem>
-                    <SelectItem value="physics">Vật lý</SelectItem>
-                    <SelectItem value="chemistry">Hóa học</SelectItem>
-                    <SelectItem value="literature">Ngữ văn</SelectItem>
-                    <SelectItem value="english">Tiếng Anh</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </FormField>

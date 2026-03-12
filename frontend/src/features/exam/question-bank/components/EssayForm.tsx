@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PageHeader } from '@/components/composite/page-header'
 import { FormField } from '@/components/composite/form-field'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,21 +8,73 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useGetQuestion, useGetCategories, MOCK_CATEGORIES } from '../hooks'
 
 interface RubricRow { id: string; criterion: string; maxScore: number; description: string }
 
 export function EssayForm({ questionId }: { questionId?: string }) {
   const isEdit = !!questionId
+
+  const { data: questionData, isLoading } = useGetQuestion(questionId ?? '')
+  const { data: catData } = useGetCategories()
+
+  const question = questionData?.data
+  const categories = catData?.data ?? MOCK_CATEGORIES
+
+  const flatCats = categories.flatMap((c) => [
+    { id: c.id, name: c.name },
+    ...(c.children ?? []).map((ch) => ({ id: ch.id, name: `— ${ch.name}` })),
+  ])
+
   const [content, setContent] = useState('')
   const [suggestedAnswer, setSuggestedAnswer] = useState('')
+  const [maxScore, setMaxScore] = useState('10')
+  const [categoryId, setCategoryId] = useState('')
+  const [difficulty, setDifficulty] = useState('')
   const [rubric, setRubric] = useState<RubricRow[]>([
     { id: '1', criterion: '', maxScore: 0, description: '' },
   ])
 
+  // Populate form khi có dữ liệu câu hỏi (edit mode)
+  useEffect(() => {
+    if (!question) return
+    setContent(question.content ?? '')
+    setSuggestedAnswer(question.suggestedAnswer ?? '')
+    setMaxScore(String(question.maxScore ?? 10))
+    setCategoryId(question.categoryId ?? '')
+    setDifficulty(question.difficulty ?? '')
+    if (question.rubric && question.rubric.length > 0) {
+      setRubric(
+        question.rubric.map((r) => ({
+          id: r.id,
+          criterion: r.criterion,
+          maxScore: r.maxScore,
+          description: r.description,
+        }))
+      )
+    }
+  }, [question])
+
   const addRubricRow = () => setRubric((prev) => [...prev, { id: String(Date.now()), criterion: '', maxScore: 0, description: '' }])
   const removeRubricRow = (id: string) => setRubric((prev) => prev.filter((r) => r.id !== id))
+
+  const handleSave = (draft: boolean) => {
+    if (!content.trim()) { toast.error('Nhập đề bài'); return }
+    toast.success(draft ? 'Đã lưu nháp' : 'Đã lưu câu hỏi')
+  }
+
+  if (isEdit && isLoading) {
+    return (
+      <div className="space-y-6 max-w-3xl">
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-48 w-full" />
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -30,8 +82,8 @@ export function EssayForm({ questionId }: { questionId?: string }) {
         title={isEdit ? 'Sửa câu hỏi tự luận' : 'Thêm câu hỏi tự luận'}
         breadcrumbs={[{ label: 'Ngân hàng câu hỏi', href: '/exam/question-bank' }, { label: isEdit ? 'Sửa' : 'Thêm mới' }]}
         actions={[
-          { label: 'Lưu nháp', variant: 'outline', onClick: () => toast.success('Đã lưu nháp') },
-          { label: 'Lưu', onClick: () => { if (!content.trim()) { toast.error('Nhập đề bài'); return }; toast.success('Đã lưu') } },
+          { label: 'Lưu nháp', variant: 'outline', onClick: () => handleSave(true) },
+          { label: 'Lưu', onClick: () => handleSave(false) },
         ]}
       />
       <div className="space-y-6 max-w-3xl">
@@ -40,13 +92,36 @@ export function EssayForm({ questionId }: { questionId?: string }) {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <FormField name="category" label="Danh mục" required>
-                <Select><SelectTrigger><SelectValue placeholder="Chọn danh mục" /></SelectTrigger><SelectContent><SelectItem value="math">Toán học</SelectItem><SelectItem value="lit">Ngữ văn</SelectItem></SelectContent></Select>
+                <Select value={categoryId} onValueChange={(v) => v && setCategoryId(v)}>
+                  <SelectTrigger><SelectValue placeholder="Chọn danh mục" /></SelectTrigger>
+                  <SelectContent>
+                    {flatCats.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </FormField>
               <FormField name="difficulty" label="Độ khó" required>
-                <Select><SelectTrigger><SelectValue placeholder="Chọn độ khó" /></SelectTrigger><SelectContent><SelectItem value="easy">Dễ</SelectItem><SelectItem value="medium">TB</SelectItem><SelectItem value="hard">Khó</SelectItem></SelectContent></Select>
+                <Select value={difficulty} onValueChange={(v) => v && setDifficulty(v)}>
+                  <SelectTrigger><SelectValue placeholder="Chọn độ khó" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="easy">Dễ</SelectItem>
+                    <SelectItem value="medium">Trung bình</SelectItem>
+                    <SelectItem value="hard">Khó</SelectItem>
+                    <SelectItem value="very_hard">Rất khó</SelectItem>
+                  </SelectContent>
+                </Select>
               </FormField>
             </div>
-            <FormField name="maxScore" label="Điểm tối đa"><Input type="number" defaultValue="10" min={0} className="w-32" /></FormField>
+            <FormField name="maxScore" label="Điểm tối đa">
+              <Input
+                type="number"
+                value={maxScore}
+                onChange={(e) => setMaxScore(e.target.value)}
+                min={0}
+                className="w-32"
+              />
+            </FormField>
           </CardContent>
         </Card>
         <Card>

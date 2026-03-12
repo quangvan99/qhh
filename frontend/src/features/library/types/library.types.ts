@@ -103,6 +103,7 @@ export interface PaginatedResponse<T> {
   total: number
   page: number
   pageSize: number
+  totalPages?: number
 }
 
 // === WF-09a1 Types ===

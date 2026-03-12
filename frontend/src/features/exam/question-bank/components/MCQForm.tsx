@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Trash2, GripVertical } from 'lucide-react'
 import { PageHeader } from '@/components/composite/page-header'
 import { FormField } from '@/components/composite/form-field'
@@ -13,12 +13,26 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
+import { useGetQuestion, useGetCategories, MOCK_CATEGORIES } from '../hooks'
 
 interface OptionItem { id: string; content: string; isCorrect: boolean }
 
 export function MCQForm({ questionId }: { questionId?: string }) {
   const isEdit = !!questionId
+
+  const { data: questionData, isLoading } = useGetQuestion(questionId ?? '')
+  const { data: catData } = useGetCategories()
+
+  const question = questionData?.data
+  const categories = catData?.data ?? MOCK_CATEGORIES
+
+  const flatCats = categories.flatMap((c) => [
+    { id: c.id, name: c.name },
+    ...(c.children ?? []).map((ch) => ({ id: ch.id, name: `— ${ch.name}` })),
+  ])
+
   const [questionContent, setQuestionContent] = useState('')
   const [options, setOptions] = useState<OptionItem[]>([
     { id: 'a', content: '', isCorrect: true },
@@ -28,6 +42,36 @@ export function MCQForm({ questionId }: { questionId?: string }) {
   ])
   const [explanation, setExplanation] = useState('')
   const [mcqType, setMcqType] = useState('single')
+  const [categoryId, setCategoryId] = useState('')
+  const [difficulty, setDifficulty] = useState('')
+  const [tags, setTags] = useState('')
+
+  // Populate form khi có dữ liệu câu hỏi (edit mode)
+  useEffect(() => {
+    if (!question) return
+    setQuestionContent(question.content ?? '')
+    setExplanation(question.explanation ?? '')
+    setCategoryId(question.categoryId ?? '')
+    setDifficulty(question.difficulty ?? '')
+    setTags((question.tags ?? []).join(', '))
+    if (question.type === 'multi_choice') {
+      setMcqType('multi')
+    } else {
+      setMcqType('single')
+    }
+    if (question.options && question.options.length > 0) {
+      setOptions(
+        question.options
+          .slice()
+          .sort((a, b) => a.order - b.order)
+          .map((o, i) => ({
+            id: o.id ?? String.fromCharCode(97 + i),
+            content: o.content,
+            isCorrect: o.isCorrect,
+          }))
+      )
+    }
+  }, [question])
 
   const updateOption = (id: string, content: string) => {
     setOptions((prev) => prev.map((o) => o.id === id ? { ...o, content } : o))
@@ -59,6 +103,16 @@ export function MCQForm({ questionId }: { questionId?: string }) {
     toast.success(draft ? 'Đã lưu nháp' : 'Đã lưu câu hỏi')
   }
 
+  if (isEdit && isLoading) {
+    return (
+      <div className="space-y-6 max-w-3xl">
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    )
+  }
+
   return (
     <div>
       <PageHeader
@@ -76,13 +130,34 @@ export function MCQForm({ questionId }: { questionId?: string }) {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <FormField name="category" label="Danh mục" required>
-                <Select><SelectTrigger><SelectValue placeholder="Chọn danh mục" /></SelectTrigger><SelectContent><SelectItem value="math">Toán học</SelectItem><SelectItem value="physics">Vật lý</SelectItem></SelectContent></Select>
+                <Select value={categoryId} onValueChange={(v) => v && setCategoryId(v)}>
+                  <SelectTrigger><SelectValue placeholder="Chọn danh mục" /></SelectTrigger>
+                  <SelectContent>
+                    {flatCats.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </FormField>
               <FormField name="difficulty" label="Độ khó" required>
-                <Select><SelectTrigger><SelectValue placeholder="Chọn độ khó" /></SelectTrigger><SelectContent><SelectItem value="easy">Dễ</SelectItem><SelectItem value="medium">Trung bình</SelectItem><SelectItem value="hard">Khó</SelectItem><SelectItem value="very_hard">Rất khó</SelectItem></SelectContent></Select>
+                <Select value={difficulty} onValueChange={(v) => v && setDifficulty(v)}>
+                  <SelectTrigger><SelectValue placeholder="Chọn độ khó" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="easy">Dễ</SelectItem>
+                    <SelectItem value="medium">Trung bình</SelectItem>
+                    <SelectItem value="hard">Khó</SelectItem>
+                    <SelectItem value="very_hard">Rất khó</SelectItem>
+                  </SelectContent>
+                </Select>
               </FormField>
             </div>
-            <FormField name="tags" label="Tags"><Input placeholder="Nhập tags, phân cách bằng dấu phẩy..." /></FormField>
+            <FormField name="tags" label="Tags">
+              <Input
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                placeholder="Nhập tags, phân cách bằng dấu phẩy..."
+              />
+            </FormField>
           </CardContent>
         </Card>
 

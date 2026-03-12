@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { Users, BookOpen, Camera, Library, Download } from 'lucide-react'
@@ -9,10 +10,12 @@ import { ChartCard } from '@/components/patterns/chart-card'
 import { RecentActivity } from './RecentActivity'
 import { QuickShortcuts } from './QuickShortcuts'
 import { useAdminSummary, useDashboardCharts } from '../api/dashboard.api'
+import { ExportModal } from '@/features/reports/components/ExportModal'
 
 export function AdminDashboard() {
   const { data: summary, isLoading: summaryLoading } = useAdminSummary()
   const { data: charts, isLoading: chartsLoading } = useDashboardCharts()
+  const [exportOpen, setExportOpen] = useState(false)
 
   const today = format(new Date(), "EEEE, dd/MM/yyyy", { locale: vi })
 
@@ -71,7 +74,7 @@ export function AdminDashboard() {
             label: 'Xuất báo cáo',
             icon: <Download className="h-4 w-4" />,
             variant: 'outline',
-            onClick: () => {},
+            onClick: () => setExportOpen(true),
           },
         ]}
       />
@@ -101,6 +104,18 @@ export function AdminDashboard() {
         <RecentActivity />
         <QuickShortcuts />
       </div>
+
+      <ExportModal
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        reportTitle="Tổng quan hệ thống"
+        data={summary ? [
+          { 'Chỉ số': 'Tổng học sinh',       'Giá trị': summary.students,        'Đơn vị': 'học sinh' },
+          { 'Chỉ số': 'Lớp đang hoạt động',  'Giá trị': summary.classes,         'Đơn vị': 'lớp' },
+          { 'Chỉ số': 'Điểm danh hôm nay',   'Giá trị': summary.attendanceToday, 'Đơn vị': '%' },
+          { 'Chỉ số': 'Sách đang mượn',      'Giá trị': summary.booksOnLoan,     'Đơn vị': 'cuốn' },
+        ] : []}
+      />
     </div>
   )
 }

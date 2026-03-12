@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  LayoutDashboard, BookOpen, ClipboardList, Camera, Library, Settings, ChevronDown, ChevronRight,
+  LayoutDashboard, BookOpen, ClipboardList, Camera, Library, Settings, FileBarChart, ChevronDown, ChevronRight,
 } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useUIStore } from '@/stores/ui.store'
@@ -56,6 +56,7 @@ const navItems: NavItem[] = [
       { label: 'Tra cứu sách', href: '/library-portal/opac', roles: ['all'] },
     ],
   },
+  { label: 'Báo cáo', href: '/reports', icon: FileBarChart, roles: ['admin', 'principal'] },
   {
     label: 'Quản trị', icon: Settings, module: 'admin', roles: ['admin'],
     children: [

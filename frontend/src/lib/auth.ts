@@ -1,5 +1,6 @@
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
+import { authConfig } from './auth.config'
 
 declare module 'next-auth' {
   interface User {
@@ -27,6 +28,10 @@ declare module '@auth/core/jwt' {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  // Spread shared config (trustHost: true, pages, authorized callback).
+  // trustHost: true → NextAuth reads Host header from the actual request,
+  // so redirect URLs always use the real origin instead of localhost.
+  ...authConfig,
   providers: [
     {
       id: 'hues',
@@ -112,8 +117,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session
     },
     async redirect({ url, baseUrl }) {
-      if (url.startsWith(baseUrl)) return url
+      // Relative path → giữ nguyên origin của request (trustHost xử lý)
       if (url.startsWith('/')) return `${baseUrl}${url}`
+      // Cùng origin → cho qua
+      if (url.startsWith(baseUrl)) return url
+      // Khác origin (OAuth callback, ...) → về trang chủ
       return `${baseUrl}/`
     },
   },

@@ -26,9 +26,16 @@ export default function EditScormPage({ params }: { params: Promise<{ id: string
         open={true}
         onOpenChange={(open) => { if (!open) router.back() }}
         initialData={item}
-        onSubmit={(data) => {
+        onSubmit={(formData) => {
           mutation.mutate(
-            { itemId, ...data },
+            {
+              itemId,
+              title: (formData.get("title") as string) ?? item.title,
+              description: (formData.get("description") as string) ?? undefined,
+              completionType: item.completionType,
+              minScore: formData.get("minScore") ? Number(formData.get("minScore")) : item.minScore,
+              maxAttempts: item.maxAttempts,
+            },
             { onSuccess: () => { toast.success("Đã cập nhật"); router.push(`/lms/classes/${id}/content/${groupId}/scorm`) } }
           )
         }}
