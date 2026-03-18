@@ -19,13 +19,7 @@ declare module 'next-auth' {
   }
 }
 
-declare module '@auth/core/jwt' {
-  interface JWT {
-    role?: string
-    unitId?: string
-    id?: string
-  }
-}
+// JWT token fields are extended via type cast in the callbacks below
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   // Spread shared config (trustHost: true, pages, authorized callback).
@@ -110,9 +104,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async session({ session, token }) {
       if (token) {
-        session.user.role = token.role
-        session.user.unitId = token.unitId
-        session.user.id = token.id ?? ''
+        session.user.role = token.role as string | undefined
+        session.user.unitId = token.unitId as string | undefined
+        session.user.id = (token.id as string | undefined) ?? (token.sub ?? '')
       }
       return session
     },

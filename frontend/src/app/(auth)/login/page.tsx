@@ -1,9 +1,10 @@
 import { Suspense } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { LoginForm } from '@/features/auth/components/LoginForm'
-import { SSOButton } from '@/features/auth/components/SSOButton'
-import { AuthError } from '@/features/auth/components/AuthError'
+import { LoginForm } from '@/components/auth/LoginForm'
+import { SSOButton } from '@/components/auth/SSOButton'
+import { AuthError } from '@/components/auth/AuthError'
+import { QuickLoginButtons } from './QuickLoginButtons'
 
 export const metadata = {
   title: 'Đăng nhập — THPT Quốc Học Huế',
@@ -57,6 +58,11 @@ export default function LoginPage() {
               Quên mật khẩu?
             </button>
           </div>
+
+          {/* Dev quick-login */}
+          <Suspense fallback={null}>
+            <QuickLoginButtons />
+          </Suspense>
         </CardContent>
       </Card>
 

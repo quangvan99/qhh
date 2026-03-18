@@ -7,7 +7,6 @@ import {
 } from '@tanstack/react-table'
 import { ArrowUpDown, ArrowUp, ArrowDown, Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -53,17 +52,21 @@ export function DataTable<TData>({
         {
           id: 'select',
           header: ({ table }) => (
-            <Checkbox
+            <input
+              type="checkbox"
               checked={table.getIsAllPageRowsSelected()}
-              onCheckedChange={(val) => table.toggleAllPageRowsSelected(!!val)}
+              onChange={(e) => table.toggleAllPageRowsSelected(e.target.checked)}
               aria-label="Chọn tất cả"
+              className="h-4 w-4 cursor-pointer"
             />
           ),
           cell: ({ row }) => (
-            <Checkbox
+            <input
+              type="checkbox"
               checked={row.getIsSelected()}
-              onCheckedChange={(val) => row.toggleSelected(!!val)}
+              onChange={(e) => row.toggleSelected(e.target.checked)}
               aria-label="Chọn dòng"
+              className="h-4 w-4 cursor-pointer"
             />
           ),
           enableSorting: false,

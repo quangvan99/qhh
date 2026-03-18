@@ -3,6 +3,7 @@ import { Lexend, Source_Sans_3 } from 'next/font/google'
 import './globals.css'
 import { Toaster } from '@/components/ui/sonner'
 import { Providers } from '@/components/providers'
+import { auth } from '@/lib/auth'
 
 const lexend = Lexend({
   subsets: ['latin', 'vietnamese'],
@@ -23,11 +24,12 @@ export const metadata: Metadata = {
   description: 'Hệ thống quản lý trường học THPT Quốc Học Huế',
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth().catch(() => null)
   return (
     <html lang="vi" suppressHydrationWarning>
       <body className={`${lexend.variable} ${sourceSans.variable} font-sans antialiased`}>
-        <Providers>
+        <Providers session={session}>
           {children}
         </Providers>
         <Toaster richColors position="top-right" />

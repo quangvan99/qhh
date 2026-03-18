@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils"
 import type { UserRole } from "@/components/base/app-badge"
 
 export interface AppAvatarProps {
-  name: string
+  name?: string
   src?: string
   role?: UserRole
   size?: "xs" | "sm" | "md" | "lg" | "xl"
@@ -33,12 +33,14 @@ function getInitialsColor(name: string): string {
     "bg-teal-500", "bg-emerald-500", "bg-blue-500", "bg-purple-500",
     "bg-amber-500", "bg-rose-500", "bg-sky-500", "bg-indigo-500",
   ]
+  if (!name) return colors[0]!
   let hash = 0
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
   return colors[Math.abs(hash) % colors.length]!
 }
 
 function getInitials(name: string): string {
+  if (!name) return '?'
   return name
     .split(" ")
     .filter(Boolean)
@@ -48,7 +50,7 @@ function getInitials(name: string): string {
     .toUpperCase()
 }
 
-export function AppAvatar({ name, src, role, size = "md", showRing, className }: AppAvatarProps) {
+export function AppAvatar({ name = '', src, role, size = "md", showRing, className }: AppAvatarProps) {
   return (
     <Avatar
       className={cn(

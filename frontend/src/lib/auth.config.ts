@@ -21,5 +21,21 @@ export const authConfig: NextAuthConfig = {
       // Full route protection is handled in middleware.ts
       return !!auth?.user
     },
+    async jwt({ token, user }) {
+      if (user) {
+        token.role   = (user as { role?: string }).role
+        token.unitId = (user as { unitId?: string }).unitId
+        token.id     = user.id
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (token) {
+        ;(session.user as { role?: string }).role     = token.role   as string | undefined
+        ;(session.user as { unitId?: string }).unitId = token.unitId as string | undefined
+        ;(session.user as { id?: string }).id         = (token.id as string | undefined) ?? (token.sub ?? '')
+      }
+      return session
+    },
   },
 }
